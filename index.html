@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPA Training Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #01720b;
+            --secondary-color: #028a02;
+            --light-bg: #f4f4f9;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--light-bg);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 0.5rem 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        header p {
+            margin: 0.3rem 0 0;
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+        
+        .portal-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        .portal-card {
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 70%;
+            max-width: 1000px;
+            display: flex;
+            min-height: 300px;
+        }
+        
+        .portal-hero {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .portal-hero img {
+            width: 150px;
+            margin-bottom: 2rem;
+        }
+        
+        .portal-hero h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .portal-hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+        
+        .portal-options {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .portal-options h2 {
+            color: var(--primary-color);
+            margin-bottom: 0rem;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+        
+        .option-card {
+            border: 2px solid rgba(1, 114, 11, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .option-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(1, 114, 11, 0.1);
+        }
+        
+        .option-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .option-card h3 i {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .option-card p {
+            color: #555;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-portal {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .btn-portal:hover {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        footer {
+            background: #ddd;
+            text-align: center;
+            padding: 0.4rem 0;
+            margin-top: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .portal-card {
+                flex-direction: column;
+            }
+            
+            .portal-hero {
+                padding: 2rem;
+            }
+            
+            .portal-options {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NPA Training Portal</h1>
+    </header>
+    
+    <div class="portal-container">
+        <div class="portal-card">
+            <div class="portal-hero">
+                <img src="npa.jpg" alt="NPA Logo">
+                <h2>Welcome to the Training Portal</h2>
+                <p>Manage and track all training activities in one centralized platform</p>
+                <!----<div class="d-flex gap-3">
+                    <a href="admin_login.php" class="btn-portal">
+                        <i class="fas fa-lock me-2"></i> Admin Login
+                    </a>
+                    <a href="staff_login.php" class="btn-portal">
+                        <i class="fas fa-user me-2"></i> Staff Login
+                    </a> ---->
+                </div>
+            </div>
+            
+            <div class="portal-options">
+                <h2></h2>
+                
+                <div class="option-card" onclick="window.location.href='admin/index.html'">
+                    <h3><i class="fas fa-user-shield"></i> Administrator Portal</h3>
+                    <a href="admin/index.html" class="btn-portal">Access Admin Portal</a>
+                </div>
+                
+                <div class="option-card" onclick="window.location.href='staff_login.php'">
+                    <h3><i class="fas fa-user-tie"></i> Staff Portal</h3>
+                    <a href="staff_login.php" class="btn-portal">Access Staff Portal</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 Nigerian Ports Authority. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

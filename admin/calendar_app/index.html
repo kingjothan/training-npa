@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPA Training Calendar</title>
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            color: #2e7d32;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Header Styling */
+        header {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
+        }
+
+        /* Calendar Section */
+        #calendar {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(46, 125, 50, 0.2);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: #2e7d32;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1b5e20;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary {
+            background-color: #81c784;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #66bb6a;
+        }
+
+        .btn-danger {
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #b71c1c;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        /* Action Buttons Container */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        /* Event List Section */
+        .event-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 30px;
+            border: 1px solid rgba(46, 125, 50, 0.2);
+        }
+
+        .event-section h2 {
+            color: #1b5e20;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        #event-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #event-list th, #event-list td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(46, 125, 50, 0.1);
+        }
+
+        #event-list th {
+            background-color: #2e7d32;
+            color: white;
+            font-weight: 600;
+        }
+
+        #event-list tr:nth-child(even) {
+            background-color: #f1f8e9;
+        }
+
+        #event-list tr:hover {
+            background-color: #e0f2e1;
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .modal-title {
+            color: #1b5e20;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #d32f2f;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2e7d32;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(46, 125, 50, 0.3);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #2e7d32;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            background-color: #1b5e20;
+            color: white;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Animations */
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            #event-list th, #event-list td {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .event-actions {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 10px;
+            }
+        }
+
+        /* FullCalendar Customization */
+        .fc .fc-toolbar-title {
+            color: #1b5e20;
+            font-weight: 600;
+        }
+        
+        .fc .fc-button {
+            background-color: #2e7d32;
+            border-color: #2e7d32;
+        }
+        
+        .fc .fc-button:hover {
+            background-color: #1b5e20;
+            border-color: #1b5e20;
+        }
+        
+        .fc-event {
+            background-color: #388e3c;
+            border-color: #388e3c;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .fc-event:hover {
+            background-color: #2e7d32;
+            border-color: #2e7d32;
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NPA Training Calendar</h1>
+        <p class="subtitle">Manage and view all training events</p>
+    </header>
+
+    <div class="container">
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button id="open-add-event" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Event
+            </button>
+            <button id="refresh-calendar" class="btn btn-secondary">
+                <i class="fas fa-sync-alt"></i> Refresh Calendar
+            </button>
+        </div>
+
+        <!-- Calendar Section -->
+        <div id="calendar"></div>
+
+        <!-- Event List Section -->
+        <section class="event-section">
+            <h2>Upcoming Events</h2>
+            <table id="event-list">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Event Rows Will Populate Here -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Modal for Adding/Editing Events -->
+        <div id="modal" class="modal" role="dialog" aria-labelledby="modal-title" aria-hidden="true">
+            <div class="modal-content">
+                <span class="close" aria-label="Close">&times;</span>
+                <h2 class="modal-title" id="modal-title">Add New Event</h2>
+                <form id="event-form">
+                    <input type="hidden" id="event-id" name="event-id">
+                    
+                    <div class="form-group">
+                        <label for="title">Event Title:</label>
+                        <input type="text" id="title" name="title" class="form-control" placeholder="Enter event title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <textarea id="description" name="description" class="form-control" placeholder="Enter event description" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="date">Event Date:</label>
+                        <input type="date" id="date" name="date" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="location">Location:</label>
+                        <input type="text" id="location" name="location" class="form-control" placeholder="Enter event location">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trainer">Trainer:</label>
+                        <input type="text" id="trainer" name="trainer" class="form-control" placeholder="Enter trainer name">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="submit-btn">
+                        <i class="fas fa-save"></i> Save Event
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 NPA Training Portal. All rights reserved.</p>
+    </footer>
+
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <!-- Custom Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const calendarEl = document.getElementById("calendar");
+            const modal = document.getElementById("modal");
+            const closeBtn = document.querySelector(".close");
+            const form = document.getElementById("event-form");
+            const eventList = document.getElementById("event-list").getElementsByTagName("tbody")[0];
+            const refreshBtn = document.getElementById("refresh-calendar");
+            const modalTitle = document.getElementById("modal-title");
+
+            // Initialize calendar
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: "dayGridMonth",
+                headerToolbar: {
+                    left: "prev,next today",
+                    center: "title",
+                    right: "dayGridMonth,timeGridWeek,timeGridDay"
+                },
+                events: "fetch_events.php",
+                eventClick: (info) => {
+                    modalTitle.textContent = "Edit Event";
+                    openModal(info.event);
+                },
+                eventDisplay: 'block',
+                eventTimeFormat: { 
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                }
+            });
+
+            calendar.render();
+
+            // Event listeners
+            document.getElementById("open-add-event").addEventListener("click", () => {
+                modalTitle.textContent = "Add New Event";
+                openModal();
+            });
+
+            refreshBtn.addEventListener("click", () => {
+                calendar.refetchEvents();
+                loadEvents();
+                showAlert("Calendar refreshed successfully", "success");
+            });
+
+            closeBtn.addEventListener("click", () => modal.style.display = "none");
+
+            // Close modal when clicking outside
+            window.addEventListener("click", (e) => {
+                if (e.target === modal) {
+                    modal.style.display = "none";
+                }
+            });
+
+            form.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const eventId = document.getElementById("event-id").value;
+                const url = eventId ? "update_event.php" : "add_event.php";
+                
+                fetch(url, { 
+                    method: "POST", 
+                    body: formData 
+                })
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.status === "success") {
+                        showAlert(data.message, "success");
+                        modal.style.display = "none";
+                        calendar.refetchEvents();
+                        loadEvents();
+                    } else {
+                        showAlert(data.message, "error");
+                    }
+                })
+                .catch((error) => {
+                    showAlert("An error occurred. Please try again.", "error");
+                    console.error("Error:", error);
+                });
+            });
+
+            // Load events into the table
+            function loadEvents() {
+                fetch("fetch_events.php")
+                    .then((res) => res.json())
+                    .then((data) => {
+                        eventList.innerHTML = "";
+                        data.forEach(event => {
+                            const eventDate = new Date(event.start);
+                            const formattedDate = eventDate.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            
+                            eventList.innerHTML += `
+                                <tr>
+                                    <td>${escapeHtml(event.title)}</td>
+                                    <td>${escapeHtml(event.description || 'N/A')}</td>
+                                    <td>${formattedDate}</td>
+                                    <td>
+                                        <div class="event-actions">
+                                            <button class="btn btn-secondary" onclick="editEvent(${JSON.stringify(event)})">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button class="btn btn-danger" onclick="deleteEvent(${event.id})">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                        });
+                    })
+                    .catch((error) => {
+                        console.error("Error loading events:", error);
+                    });
+            }
+
+            // Open modal with event data
+            function openModal(event = null) {
+                modal.style.display = "flex";
+                form.reset();
+                
+                if (event) {
+                    document.getElementById("event-id").value = event.id;
+                    document.getElementById("title").value = event.title;
+                    document.getElementById("description").value = event.extendedProps.description || '';
+                    document.getElementById("date").value = event.startStr.split('T')[0];
+                    document.getElementById("location").value = event.extendedProps.location || '';
+                    document.getElementById("trainer").value = event.extendedProps.trainer || '';
+                } else {
+                    document.getElementById("event-id").value = '';
+                    // Set default date to today
+                    document.getElementById("date").value = new Date().toISOString().split('T')[0];
+                }
+            }
+
+            // Show alert message
+            function showAlert(message, type) {
+                const alert = document.createElement("div");
+                alert.className = `alert alert-${type}`;
+                alert.textContent = message;
+                alert.style.position = "fixed";
+                alert.style.top = "20px";
+                alert.style.right = "20px";
+                alert.style.padding = "15px 20px";
+                alert.style.borderRadius = "8px";
+                alert.style.color = "white";
+                alert.style.backgroundColor = type === "success" ? "#2e7d32" : "#d32f2f";
+                alert.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+                alert.style.zIndex = "1001";
+                alert.style.animation = "modalFadeIn 0.3s ease";
+                document.body.appendChild(alert);
+                
+                setTimeout(() => {
+                    alert.style.opacity = "0";
+                    alert.style.transition = "opacity 0.5s ease";
+                    setTimeout(() => alert.remove(), 500);
+                }, 3000);
+            }
+
+            // Escape HTML to prevent XSS
+            function escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            // Initial load
+            loadEvents();
+
+            // Make functions available globally
+            window.deleteEvent = (id) => {
+                if (confirm("Are you sure you want to delete this event?")) {
+                    fetch("delete_event.php", {
+                        method: "POST",
+                        body: JSON.stringify({ id }),
+                        headers: { "Content-Type": "application/json" },
+                    })
+                    .then(() => {
+                        showAlert("Event deleted successfully", "success");
+                        calendar.refetchEvents();
+                        loadEvents();
+                    })
+                    .catch((error) => {
+                        showAlert("Failed to delete event", "error");
+                        console.error("Error:", error);
+                    });
+                }
+            };
+
+            window.editEvent = (event) => {
+                modalTitle.textContent = "Edit Event";
+                openModal(event);
+            };
+        });
+    </script>
+</body>
+</html>

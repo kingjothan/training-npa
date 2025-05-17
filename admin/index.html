@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nigerian Port Authority Training Portal</title>
+    <style>
+        /* General Styles */
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+
+        /* Header Styles */
+        .dashboard-header {
+            background-color: #2e7d32; /* Dark green */
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .dashboard-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dashboard-header .logo img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+            object-fit: cover;
+        }
+
+        .dashboard-header .logo img:hover {
+            transform: rotate(360deg);
+        }
+
+        .dashboard-header p {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Main Content */
+        .container {
+            flex: 1;
+            padding: 40px 20px;
+            background-color: #f8f9fa;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            width: 300px;
+            border: 1px solid #e9ecef;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-body {
+            padding: 25px;
+            text-align: center;
+        }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #2e7d32;
+        }
+
+        .card-text {
+            font-size: 15px;
+            margin-bottom: 20px;
+            color: #6c757d;
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-block;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: #2e7d32;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1b5e20;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Icons in Cards */
+        .card-icon {
+            font-size: 2.5rem;
+            color: #2e7d32;
+            margin-bottom: 15px;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .card-icon {
+            transform: scale(1.1);
+        }
+
+        /* Footer Styles */
+        footer {
+            background-color: #2e7d32;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-top: auto;
+            font-size: 14px;
+        }
+
+        footer a {
+            color: #a5d6a7;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .row {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .card {
+                width: 100%;
+                max-width: 350px;
+            }
+
+            .dashboard-header p {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="logo">
+            <img src="npa.jpg" alt="NPA Logo">
+            <p>Nigerian Ports Authority Training Portal</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="row">
+            <!-- Add Participant Card 
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-icon">👥</div>
+                    <h5 class="card-title">Add Participant</h5>
+                    <p class="card-text">Add new participant to the training program.</p>
+                    <a href="add_user.php" class="btn btn-primary">Go to Form</a>
+                </div>
+            </div>
+
+            <!-- View Participants Card
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-icon">👨‍👩‍👧‍👦</div>
+                    <h5 class="card-title">View Participants</h5>
+                    <p class="card-text">View and manage participant records.</p>
+                    <a href="view_users.php" class="btn btn-primary">View Records</a>
+                </div>
+            </div>    -->
+
+            <!-- Admin Login Card -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-icon">🔒</div>
+                    <h5 class="card-title">For Admin</h5>
+                    <p class="card-text">Access admin dashboard.</p>
+                    <a href="login.php" class="btn btn-primary">Login</a>
+                </div>
+            </div>
+
+            <!-- Calendar Section -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-icon">📅</div>
+                    <h5 class="card-title">Calendar</h5>
+                    <p class="card-text">View and manage training schedules.</p>
+                    <a href="calendar_app/index.html" class="btn btn-primary">Open Calendar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2024 Designed by <a href="https://kingjothan.netlify.app/" target="_blank" rel="noopener noreferrer">Okoiruele Jonathan Oseremen</a>. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>
