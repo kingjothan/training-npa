@@ -1,4 +1,5 @@
 <?php
+require_once 'silent.php';
 // Configure session settings BEFORE starting the session
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', 1); // Enable this if using HTTPS
@@ -396,6 +397,9 @@ if (!isset($_SESSION['csrf_token'])) {
             </li>
             <li>
                 <a href="add_user.php"><i class="fas fa-user-plus"></i> Add Participant</a>
+            </li>
+            <li>
+                <a href="admin_scores.php"><i class="fas fa-star"></i> Training Scores</a>
             </li>
             <li>
                 <a href="admin_change_password.php"><i class="fas fa-lock"></i> Change Password</a>

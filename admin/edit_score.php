@@ -1,25 +1,23 @@
 <?php
-
 require_once 'silent.php';
 
-// Configure session settings BEFORE starting the session
+// Configure session settings
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 1); // Enable this if using HTTPS
+ini_set('session.cookie_secure', 1);
 ini_set('session.use_strict_mode', 1);
 
-// Start session only if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
-    session_regenerate_id(true); // Regenerate session ID to prevent session fixation
+    session_regenerate_id(true);
 }
 
-// Redirect if not logged in
+// Redirect if not logged in as admin
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
-// Database connection with error handling
+// Database connection
 try {
     $pdo = new PDO('mysql:host=localhost;dbname=npa_training', 'root', '');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -28,76 +26,116 @@ try {
     die("An error occurred. Please try again later.");
 }
 
-// Get stats for dashboard
-$trainingQuery = "SELECT training_type, COUNT(*) as count FROM participants GROUP BY training_type";
-$trainingStmt = $pdo->prepare($trainingQuery);
-$trainingStmt->execute();
-$trainingTypes = $trainingStmt->fetchAll(PDO::FETCH_ASSOC);
+// Check if IDs are provided
+if (!isset($_GET['participant_id']) || !is_numeric($_GET['participant_id']) || 
+    !isset($_GET['training_id']) || !is_numeric($_GET['training_id'])) {
+    die("Invalid participant or training ID.");
+}
 
-$totalParticipantsQuery = "SELECT COUNT(*) as total FROM participants";
-$totalParticipantsStmt = $pdo->prepare($totalParticipantsQuery);
-$totalParticipantsStmt->execute();
-$totalParticipants = $totalParticipantsStmt->fetch(PDO::FETCH_ASSOC)['total'];
+$participant_id = (int)$_GET['participant_id'];
+$training_id = (int)$_GET['training_id'];
 
-$totalCostQuery = "SELECT SUM(total_cost_of_participation) as total_cost FROM participants";
-$totalCostStmt = $pdo->prepare($totalCostQuery);
-$totalCostStmt->execute();
-$totalCost = $totalCostStmt->fetch(PDO::FETCH_ASSOC)['total_cost'];
+// Get score details
+$query = "SELECT s.*, p.name as participant_name, t.training_description 
+          FROM scores s
+          JOIN participants p ON s.participant_id = p.id
+          JOIN participants t ON s.training_id = t.id
+          WHERE s.participant_id = ? AND s.training_id = ?";
+$stmt = $pdo->prepare($query);
+$stmt->execute([$participant_id, $training_id]);
+$score = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$totalConsultationQuery = "SELECT SUM(consultation_amount) as total_consultation FROM participants";
-$totalConsultationStmt = $pdo->prepare($totalConsultationQuery);
-$totalConsultationStmt->execute();
-$totalConsultation = $totalConsultationStmt->fetch(PDO::FETCH_ASSOC)['total_consultation'];
+// If no score exists, create a new one
+if (!$score) {
+    $score = [
+        'participant_id' => $participant_id,
+        'training_id' => $training_id,
+        'score' => null,
+        'remarks' => null,
+        'participant_name' => '',
+        'training_description' => ''
+    ];
+    
+    // Get participant and training details
+    $detailsQuery = "SELECT p.name as participant_name, t.training_description 
+                     FROM participants p, participants t
+                     WHERE p.id = ? AND t.id = ?";
+    $detailsStmt = $pdo->prepare($detailsQuery);
+    $detailsStmt->execute([$participant_id, $training_id]);
+    $details = $detailsStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($details) {
+        $score['participant_name'] = $details['participant_name'];
+        $score['training_description'] = $details['training_description'];
+    }
+}
 
-$recentParticipantsQuery = "SELECT * FROM participants ORDER BY id DESC LIMIT 5";
-$recentParticipantsStmt = $pdo->prepare($recentParticipantsQuery);
-$recentParticipantsStmt->execute();
-$recentParticipants = $recentParticipantsStmt->fetchAll(PDO::FETCH_ASSOC);
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $new_score = $_POST['score'];
+    $remarks = $_POST['remarks'];
+    
+    // Validate score
+    if (!is_numeric($new_score)) {
+        $error = "Score must be a number";
+    } elseif ($new_score < 0 || $new_score > 100) {
+        $error = "Score must be between 0 and 100";
+    } else {
+        try {
+            $pdo->beginTransaction();
+            
+            if (isset($score['id'])) {
+                // Update existing score
+                $updateQuery = "UPDATE scores SET score = ?, remarks = ? 
+                               WHERE participant_id = ? AND training_id = ?";
+                $updateStmt = $pdo->prepare($updateQuery);
+                $updateStmt->execute([$new_score, $remarks, $participant_id, $training_id]);
+            } else {
+                // Insert new score
+                $insertQuery = "INSERT INTO scores (participant_id, training_id, score, remarks) 
+                               VALUES (?, ?, ?, ?)";
+                $insertStmt = $pdo->prepare($insertQuery);
+                $insertStmt->execute([$participant_id, $training_id, $new_score, $remarks]);
+            }
+            
+            $pdo->commit();
+            $success = "Score saved successfully!";
+            
+            // Refresh score data
+            $stmt->execute([$participant_id, $training_id]);
+            $score = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            error_log("Database error: " . $e->getMessage());
+            $error = "Failed to save score. Please try again.";
+        }
+    }
+}
 
-$statusQuery = "SELECT status, COUNT(*) as count FROM participants GROUP BY status";
-$statusStmt = $pdo->prepare($statusQuery);
-$statusStmt->execute();
-$statusDistribution = $statusStmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Function to escape output safely
 function escape($data) {
     return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
 }
-
-// Generate a CSRF token
-if (!isset($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-// Logout functionality
-if (isset($_GET['logout'])) {
-    session_unset(); // Clear session variables
-    session_destroy(); // Destroy session
-    header('Location: /training-npa/index.html');
-    exit;
-}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - NPA Training Portal</title>
-    <!-- Font Awesome for Icons -->
+    <title>Edit Score - NPA Training Portal</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <!-- Chart.js for Charts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* Include the same styles as admin_dashboard.php */
         :root {
             --primary-color: #2e7d32;
             --secondary-color: #81c784;
             --light-bg: #e8f5e9;
             --dark-text: #1b5e20;
-            --completed-bg: #e8f5e9;
-            --completed-text: #2e7d32;
-            --in-progress-bg: #fff8e1;
-            --in-progress-text: #ff8f00;
-            --upcoming-bg: #e3f2fd;
-            --upcoming-text: #1565c0;
+            --success-bg: #d4edda;
+            --success-text: #155724;
+            --error-bg: #f8d7da;
+            --error-text: #721c24;
         }
         
         * {
@@ -444,6 +482,58 @@ if (isset($_GET['logout'])) {
         .fa-spinner:before {
             content: "\f110";
         }
+        
+
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="number"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        textarea {
+            min-height: 100px;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background-color: var(--dark-text);
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+        }
+        
+        .alert-error {
+            background-color: var(--error-bg);
+            color: var(--error-text);
+        }
     </style>
 </head>
 <body>
@@ -455,7 +545,7 @@ if (isset($_GET['logout'])) {
         </div>
         
         <ul class="sidebar-menu">
-            <li class="active">
+            <li>
                 <a href="admin_dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             </li>
             <li>
@@ -472,14 +562,14 @@ if (isset($_GET['logout'])) {
             </li>
             <li>
                 <a href="/training-npa/index.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </li>   
+            </li>
         </ul>
     </div>
     
     <!-- Main Content -->
     <div class="main-content">
         <div class="header">
-            <h3>Welcome, <?= escape($_SESSION['username']) ?></h3>
+            <h3><?= isset($score['id']) ? 'Edit' : 'Add' ?> Training Score</h3>
             <div class="user-profile">
                 <img src="npa.jpg" alt="NPA Logo">
                 <div class="user-info">
@@ -489,156 +579,50 @@ if (isset($_GET['logout'])) {
             </div>
         </div>
         
-        <!-- Stats Cards -->
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card stat-card">
-                    <div class="number"><?= escape($totalParticipants) ?></div>
-                    <div class="label">Total Participants</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card stat-card">
-                    <div class="number"><?= escape(number_format($totalCost, 2)) ?></div>
-                    <div class="label">Total Cost</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card stat-card">
-                    <div class="number"><?= escape(number_format($totalConsultation, 2)) ?></div>
-                    <div class="label">Consultant Fees</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Charts Container -->
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-chart-bar"></i> Training Types
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="trainingChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-chart-pie"></i> Status Distribution
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="statusChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        
-         <!-- Calendar Section -->
-            <div class="card">
-                <div class="card-body">
-                    <div class="card-icon">📅</div>
-                    <h5 class="card-title">Calendar</h5>
-                    <p class="card-text">View and manage training schedules.</p>
-                    <a href="calendar_app/index.html" class="btn btn-primary">Open Calendar</a>
-                </div>
-            </div>
-        
-        <!-- Recent Participants -->
-        <div class="card mt-4">
+        <div class="card">
             <div class="card-header">
-                <i class="fas fa-users"></i> Recent Participants
+                <i class="fas fa-star"></i> Score Details
             </div>
             <div class="card-body">
-                <?php if (!empty($recentParticipants)): ?>
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Personal Number</th>
-                                    <th>Training Type</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($recentParticipants as $participant): ?>
-                                    <tr>
-                                        <td><?= escape($participant['name']) ?></td>
-                                        <td><?= escape($participant['personal_number']) ?></td>
-                                        <td><?= escape($participant['training_type']) ?></td>
-                                        <td><?= escape($participant['status']) ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php else: ?>
-                    <div class="alert alert-info">No recent participants found.</div>
+                <?php if (isset($success)): ?>
+                    <div class="alert alert-success"><?= escape($success) ?></div>
                 <?php endif; ?>
+                
+                <?php if (isset($error)): ?>
+                    <div class="alert alert-error"><?= escape($error) ?></div>
+                <?php endif; ?>
+                
+                <div class="form-group">
+                    <label>Participant:</label>
+                    <p><?= escape($score['participant_name']) ?></p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Training:</label>
+                    <p><?= escape($score['training_description']) ?></p>
+                </div>
+                
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="score">Score (0-100):</label>
+                        <input type="number" id="score" name="score" min="0" max="100" step="0.01" 
+                               value="<?= escape($score['score'] ?? '') ?>" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="remarks">Remarks:</label>
+                        <textarea id="remarks" name="remarks"><?= escape($score['remarks'] ?? '') ?></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <!----<a href="view_user.php?id=<?= $participant_id ?>" class="btn" style="background-color: #6c757d;">
+                        <i class="fas fa-arrow-left"></i> Back to Participant
+                    </a>----->
+                </form>
             </div>
         </div>
     </div>
-
-    <!-- Chart Script -->
-    <script>
-        const trainingTypes = <?= json_encode($trainingTypes) ?>;
-        const labels = trainingTypes.map(item => item.training_type);
-        const data = trainingTypes.map(item => item.count);
-
-        const ctx = document.getElementById('trainingChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Number of Participants per Training Type',
-                    data: data,
-                    backgroundColor: '#81c784',
-                    borderColor: '#66bb6a',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        const statusDistribution = <?= json_encode($statusDistribution) ?>;
-        const statusLabels = statusDistribution.map(item => item.status);
-        const statusData = statusDistribution.map(item => item.count);
-
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'pie',
-            data: {
-                labels: statusLabels,
-                datasets: [{
-                    label: 'Participant Status Distribution',
-                    data: statusData,
-                    backgroundColor: [
-                        '#81c784', '#66bb6a', '#43a047', '#388e3c', '#2e7d32'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-            }
-        });
-    </script>
 </body>
 </html>

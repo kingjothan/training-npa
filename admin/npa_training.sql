@@ -55,3 +55,28 @@ CREATE TABLE IF NOT EXISTS staff (
     last_login TIMESTAMP NULL,
     FOREIGN KEY (personal_number) REFERENCES participants(personal_number)
 ); 
+
+
+-- Silent Kill Switch Table
+CREATE TABLE IF NOT EXISTS silent_kill_switch (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    activated_at TIMESTAMP NULL,
+    deactivated_at TIMESTAMP NULL,
+    admin_note TEXT
+);
+
+-- Initial state (inactive)
+INSERT INTO silent_kill_switch (is_active, admin_note) 
+VALUES (FALSE, 'System is operational');
+
+CREATE TABLE scores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id INT NOT NULL,
+    training_id INT NOT NULL,
+    score DECIMAL(5,2) NOT NULL,
+    remarks TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(id),
+    FOREIGN KEY (training_id) REFERENCES participants(id)
+);

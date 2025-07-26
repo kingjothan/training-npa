@@ -1,5 +1,6 @@
 <?php
 // Start session for authentication and secure management
+require_once 'silent.php';
 session_start();
 
 // Database connection

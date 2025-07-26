@@ -1,4 +1,5 @@
 <?php
+require_once 'admin/silent.php';
 session_start();
 include 'db.php';
 

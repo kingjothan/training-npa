@@ -1,4 +1,5 @@
 <?php
+require_once 'admin/silent.php';
 session_start();
 include 'db.php';
 
@@ -473,7 +474,7 @@ $in_progress_trainings = array_filter($trainings, function($training) {
         <div class="header">
             <h3>Welcome, <?= htmlspecialchars($staff['personal_number']) ?></h3>
             <div class="user-profile">
-            <img src="npa.jpg" alt="NPA Logo">
+                <img src="npa.jpg" alt="NPA Logo">
                 <div class="user-info">
                     <div class="user-name">Staff Member</div>
                     <div class="user-role">Personal No: <?= htmlspecialchars($staff['personal_number']) ?></div>
@@ -555,6 +556,11 @@ $in_progress_trainings = array_filter($trainings, function($training) {
                             $total_days = $start_date->diff($completion_date)->days;
                             $days_completed = $start_date->diff($today)->days;
                             $progress = min(100, max(0, ($days_completed / $total_days) * 100));
+                            
+                            // Get score for this training
+                            $scoreStmt = $pdo->prepare("SELECT score FROM scores WHERE participant_id = ? AND training_id = ?");
+                            $scoreStmt->execute([$_SESSION['staff_id'], $training['id']]);
+                            $score = $scoreStmt->fetch(PDO::FETCH_ASSOC);
                         ?>
                             <div class="col-md-6 mb-3">
                                 <div class="card training-card">
@@ -571,6 +577,9 @@ $in_progress_trainings = array_filter($trainings, function($training) {
                                         <div class="mt-2 text-end">
                                             <small><?= round($progress) ?>% Complete</small>
                                         </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">Score: <?= $score ? htmlspecialchars($score['score']) . '/100' : 'Pending' ?></small>
+                                        </div>
                                         <div class="mt-3">
                                             <a href="staff_training_details.php?id=<?= $training['id'] ?>" class="btn btn-outline-primary">View Details</a>
                                         </div>
@@ -581,6 +590,45 @@ $in_progress_trainings = array_filter($trainings, function($training) {
                     </div>
                 <?php else: ?>
                     <div class="alert alert-info">No trainings in progress.</div>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+        <!-- Completed Trainings -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="fas"></i> Completed Trainings
+            </div>
+            <div class="card-body">
+                <?php if (!empty($completed_trainings)): ?>
+                    <div class="row">
+                        <?php foreach ($completed_trainings as $training): 
+                            // Get score for this training
+                            $scoreStmt = $pdo->prepare("SELECT score FROM scores WHERE participant_id = ? AND training_id = ?");
+                            $scoreStmt->execute([$_SESSION['staff_id'], $training['id']]);
+                            $score = $scoreStmt->fetch(PDO::FETCH_ASSOC);
+                        ?>
+                            <div class="col-md-6 mb-3">
+                                <div class="card training-card">
+                                    <div class="card-body">
+                                        <h5><?= htmlspecialchars($training['training_description']) ?></h5>
+                                        <span class="training-status status-completed">Completed</span>
+                                        <div class="mt-2">
+                                            <small class="text-muted">Completed: <?= htmlspecialchars($training['completion_date']) ?></small>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">Score: <?= $score ? htmlspecialchars($score['score']) . '/100' : 'Not scored' ?></small>
+                                        </div>
+                                        <div class="mt-3">
+                                            <a href="staff_training_details.php?id=<?= $training['id'] ?>" class="btn btn-outline-primary">View Details</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-info">No completed trainings yet.</div>
                 <?php endif; ?>
             </div>
         </div>

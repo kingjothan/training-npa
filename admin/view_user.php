@@ -1,4 +1,5 @@
 <?php
+require_once 'silent.php';
 // Start session for secure user management (e.g., authentication)
 session_start();
 
@@ -44,9 +45,6 @@ $progressPercentage = min(100, max(0, ($daysCompleted / $totalDays) * 100));
 
 // Calculate the number of days between start date and completion date
 $numberOfDays = $startDate->diff($completionDate)->days;
-
-// Closing the PDO connection
-$pdo = null;
 ?>
 
 <!DOCTYPE html>
@@ -414,7 +412,32 @@ $pdo = null;
                         <th>Remark</th>
                         <td><?= escape($user['remark']) ?></td>
                     </tr>
+                    <tr>
+                        <th>Training Score</th>
+                        <td>
+                            <?php
+                            // Get score for this participant and training
+                            $scoreQuery = "SELECT * FROM scores WHERE participant_id = ? AND training_id = ?";
+                            $scoreStmt = $pdo->prepare($scoreQuery);
+                            $scoreStmt->execute([$user['id'], $user['id']]);
+                            $score = $scoreStmt->fetch(PDO::FETCH_ASSOC);
+                            
+                            if ($score) {
+                                echo escape($score['score']) . '/100';
+                                if (!empty($score['remarks'])) {
+                                    echo '<br><small>Remarks: ' . escape($score['remarks']) . '</small>';
+                                }
+                            } else {
+                                echo 'Not scored yet';
+                                if (isset($_SESSION['user_id'])) { // Only show link to admins
+                                    echo '<br><a href="edit_score.php?participant_id=' . $user['id'] . '&training_id=' . $user['id'] . '">Add Score</a>';
+                                }
+                            }
+                            ?>
+                        </td>
+                    </tr>
                 </table>
+                
             </section>
 
             <!-- Interactive Chart -->
@@ -580,3 +603,8 @@ $pdo = null;
     </script>
 </body>
 </html>
+
+<?php
+// Close the PDO connection at the very end of the script
+$pdo = null;
+?>

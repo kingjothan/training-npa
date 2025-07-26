@@ -1,4 +1,5 @@
 <?php
+require_once 'silent.php';
 // generate_password.php
 
 // Replace 'admin123' with the password you want to hash.

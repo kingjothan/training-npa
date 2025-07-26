@@ -1,4 +1,5 @@
         <?php
+        require_once 'silent.php';
 // Start session for authentication and secure management
 session_start();
 
@@ -535,6 +536,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </li>
             <li class="active">
                 <a href="add_user.php"><i class="fas fa-user-plus"></i> Add Participant</a>
+            </li>
+            <li>
+                <a href="admin_scores.php"><i class="fas fa-star"></i> Training Scores</a>
             </li>
             <li>
                 <a href="admin_change_password.php"><i class="fas fa-lock"></i> Change Password</a>

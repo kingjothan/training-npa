@@ -1,4 +1,5 @@
 <?php
+require_once 'silent.php';
 session_start();
 
 // Enable error reporting for debugging

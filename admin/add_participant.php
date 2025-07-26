@@ -1,4 +1,5 @@
 <?php
+require_once 'silent.php';
 // Start session for authentication and secure management
 session_start();
 

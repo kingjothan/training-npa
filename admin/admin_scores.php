@@ -1,25 +1,23 @@
 <?php
-
 require_once 'silent.php';
 
-// Configure session settings BEFORE starting the session
+// Configure session settings
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 1); // Enable this if using HTTPS
+ini_set('session.cookie_secure', 1);
 ini_set('session.use_strict_mode', 1);
 
-// Start session only if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
-    session_regenerate_id(true); // Regenerate session ID to prevent session fixation
+    session_regenerate_id(true);
 }
 
-// Redirect if not logged in
+// Redirect if not logged in as admin
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
-// Database connection with error handling
+// Database connection
 try {
     $pdo = new PDO('mysql:host=localhost;dbname=npa_training', 'root', '');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -28,65 +26,33 @@ try {
     die("An error occurred. Please try again later.");
 }
 
-// Get stats for dashboard
-$trainingQuery = "SELECT training_type, COUNT(*) as count FROM participants GROUP BY training_type";
-$trainingStmt = $pdo->prepare($trainingQuery);
-$trainingStmt->execute();
-$trainingTypes = $trainingStmt->fetchAll(PDO::FETCH_ASSOC);
-
-$totalParticipantsQuery = "SELECT COUNT(*) as total FROM participants";
-$totalParticipantsStmt = $pdo->prepare($totalParticipantsQuery);
-$totalParticipantsStmt->execute();
-$totalParticipants = $totalParticipantsStmt->fetch(PDO::FETCH_ASSOC)['total'];
-
-$totalCostQuery = "SELECT SUM(total_cost_of_participation) as total_cost FROM participants";
-$totalCostStmt = $pdo->prepare($totalCostQuery);
-$totalCostStmt->execute();
-$totalCost = $totalCostStmt->fetch(PDO::FETCH_ASSOC)['total_cost'];
-
-$totalConsultationQuery = "SELECT SUM(consultation_amount) as total_consultation FROM participants";
-$totalConsultationStmt = $pdo->prepare($totalConsultationQuery);
-$totalConsultationStmt->execute();
-$totalConsultation = $totalConsultationStmt->fetch(PDO::FETCH_ASSOC)['total_consultation'];
-
-$recentParticipantsQuery = "SELECT * FROM participants ORDER BY id DESC LIMIT 5";
-$recentParticipantsStmt = $pdo->prepare($recentParticipantsQuery);
-$recentParticipantsStmt->execute();
-$recentParticipants = $recentParticipantsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-$statusQuery = "SELECT status, COUNT(*) as count FROM participants GROUP BY status";
-$statusStmt = $pdo->prepare($statusQuery);
-$statusStmt->execute();
-$statusDistribution = $statusStmt->fetchAll(PDO::FETCH_ASSOC);
+// Get all scores with participant and training details
+$query = "SELECT s.*, p.name as participant_name, p.personal_number, 
+          t.training_description, t.start_date, t.completion_date
+          FROM scores s
+          JOIN participants p ON s.participant_id = p.id
+          JOIN participants t ON s.training_id = t.id
+          ORDER BY p.name, t.start_date DESC";
+$stmt = $pdo->prepare($query);
+$stmt->execute();
+$scores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Function to escape output safely
 function escape($data) {
     return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
 }
-
-// Generate a CSRF token
-if (!isset($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-// Logout functionality
-if (isset($_GET['logout'])) {
-    session_unset(); // Clear session variables
-    session_destroy(); // Destroy session
-    header('Location: /training-npa/index.html');
-    exit;
-}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - NPA Training Portal</title>
-    <!-- Font Awesome for Icons -->
+    <title>Training Scores - NPA Training Portal</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <!-- Chart.js for Charts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* Include the same styles as admin_dashboard.php */
+
         :root {
             --primary-color: #2e7d32;
             --secondary-color: #81c784;
@@ -99,6 +65,8 @@ if (isset($_GET['logout'])) {
             --upcoming-bg: #e3f2fd;
             --upcoming-text: #1565c0;
         }
+        
+        /* ... rest of the styles from admin_dashboard.php ... */
         
         * {
             margin: 0;
@@ -444,10 +412,39 @@ if (isset($_GET['logout'])) {
         .fa-spinner:before {
             content: "\f110";
         }
+        
+        .print-button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        
+        .print-button:hover {
+            background-color: var(--dark-text);
+        }
+        
+        @media print {
+            .sidebar, .header, .print-button {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 0;
+            }
+            
+            table {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
+    <!-- Sidebar (same as admin_dashboard.php) -->
     <div class="sidebar">
         <div class="sidebar-header">
             <h4>NPA Training Portal</h4>
@@ -455,7 +452,7 @@ if (isset($_GET['logout'])) {
         </div>
         
         <ul class="sidebar-menu">
-            <li class="active">
+            <li>
                 <a href="admin_dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             </li>
             <li>
@@ -472,14 +469,14 @@ if (isset($_GET['logout'])) {
             </li>
             <li>
                 <a href="/training-npa/index.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </li>   
+            </li>
         </ul>
     </div>
     
     <!-- Main Content -->
     <div class="main-content">
         <div class="header">
-            <h3>Welcome, <?= escape($_SESSION['username']) ?></h3>
+            <h3>Training Scores</h3>
             <div class="user-profile">
                 <img src="npa.jpg" alt="NPA Logo">
                 <div class="user-info">
@@ -489,156 +486,56 @@ if (isset($_GET['logout'])) {
             </div>
         </div>
         
-        <!-- Stats Cards -->
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card stat-card">
-                    <div class="number"><?= escape($totalParticipants) ?></div>
-                    <div class="label">Total Participants</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card stat-card">
-                    <div class="number"><?= escape(number_format($totalCost, 2)) ?></div>
-                    <div class="label">Total Cost</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card stat-card">
-                    <div class="number"><?= escape(number_format($totalConsultation, 2)) ?></div>
-                    <div class="label">Consultant Fees</div>
-                </div>
-            </div>
-        </div>
+        <button class="print-button" onclick="window.print()">
+            <i class="fas fa-print"></i> Print All Scores
+        </button>
         
-        <!-- Charts Container -->
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-chart-bar"></i> Training Types
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="trainingChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-chart-pie"></i> Status Distribution
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="statusChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        
-         <!-- Calendar Section -->
-            <div class="card">
-                <div class="card-body">
-                    <div class="card-icon">📅</div>
-                    <h5 class="card-title">Calendar</h5>
-                    <p class="card-text">View and manage training schedules.</p>
-                    <a href="calendar_app/index.html" class="btn btn-primary">Open Calendar</a>
-                </div>
-            </div>
-        
-        <!-- Recent Participants -->
-        <div class="card mt-4">
+        <div class="card">
             <div class="card-header">
-                <i class="fas fa-users"></i> Recent Participants
+                <i class="fas fa-star"></i> All Training Scores
             </div>
             <div class="card-body">
-                <?php if (!empty($recentParticipants)): ?>
+                <?php if (!empty($scores)): ?>
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
+                                    <th>Participant</th>
                                     <th>Personal Number</th>
-                                    <th>Training Type</th>
-                                    <th>Status</th>
+                                    <th>Training</th>
+                                    <th>Dates</th>
+                                    <th>Score</th>
+                                    <th>Remarks</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($recentParticipants as $participant): ?>
+                                <?php foreach ($scores as $score): ?>
                                     <tr>
-                                        <td><?= escape($participant['name']) ?></td>
-                                        <td><?= escape($participant['personal_number']) ?></td>
-                                        <td><?= escape($participant['training_type']) ?></td>
-                                        <td><?= escape($participant['status']) ?></td>
+                                        <td><?= escape($score['participant_name']) ?></td>
+                                        <td><?= escape($score['personal_number']) ?></td>
+                                        <td><?= escape($score['training_description']) ?></td>
+                                        <td>
+                                            <?= escape($score['start_date']) ?> to 
+                                            <?= escape($score['completion_date']) ?>
+                                        </td>
+                                        <td><?= escape($score['score']) ?></td>
+                                        <td><?= escape($score['remarks'] ?? 'N/A') ?></td>
+                                        <td>
+                                            <a href="edit_score.php?participant_id=<?= $score['participant_id'] ?>&training_id=<?= $score['training_id'] ?>" class="btn btn-outline-primary">
+                                                Edit
+                                            </a>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
                 <?php else: ?>
-                    <div class="alert alert-info">No recent participants found.</div>
+                    <div class="alert alert-info">No training scores found.</div>
                 <?php endif; ?>
             </div>
         </div>
     </div>
-
-    <!-- Chart Script -->
-    <script>
-        const trainingTypes = <?= json_encode($trainingTypes) ?>;
-        const labels = trainingTypes.map(item => item.training_type);
-        const data = trainingTypes.map(item => item.count);
-
-        const ctx = document.getElementById('trainingChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Number of Participants per Training Type',
-                    data: data,
-                    backgroundColor: '#81c784',
-                    borderColor: '#66bb6a',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        const statusDistribution = <?= json_encode($statusDistribution) ?>;
-        const statusLabels = statusDistribution.map(item => item.status);
-        const statusData = statusDistribution.map(item => item.count);
-
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'pie',
-            data: {
-                labels: statusLabels,
-                datasets: [{
-                    label: 'Participant Status Distribution',
-                    data: statusData,
-                    backgroundColor: [
-                        '#81c784', '#66bb6a', '#43a047', '#388e3c', '#2e7d32'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-            }
-        });
-    </script>
 </body>
 </html>

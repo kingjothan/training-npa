@@ -1,4 +1,5 @@
 <?php
+require_once 'silent.php';
 // Start the session
 session_start();
 

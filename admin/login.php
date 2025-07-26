@@ -1,6 +1,12 @@
 <?php
 // login.php
 
+// Start output buffering at the very beginning
+ob_start();
+
+// Then your existing code:
+require_once 'silent.php';
+
 session_start();
 include 'db.php';
 
