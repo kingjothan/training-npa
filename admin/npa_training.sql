@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS staff (
 
 
 -- Silent Kill Switch Table
-CREATE TABLE IF NOT EXISTS silent_kill_switch (
+CREATE TABLE IF NOT EXISTS switch (
     id INT AUTO_INCREMENT PRIMARY KEY,
     is_active BOOLEAN NOT NULL DEFAULT FALSE,
     activated_at TIMESTAMP NULL,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS silent_kill_switch (
 );
 
 -- Initial state (inactive)
-INSERT INTO silent_kill_switch (is_active, admin_note) 
+INSERT INTO switch (is_active, admin_note) 
 VALUES (FALSE, 'System is operational');
 
 CREATE TABLE scores (

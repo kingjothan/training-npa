@@ -10,7 +10,7 @@ require_once 'db.php';
 
 try {
     // Check kill switch status
-    $stmt = $pdo->query("SELECT is_active FROM silent_kill_switch LIMIT 1");
+    $stmt = $pdo->query("SELECT is_active FROM switch LIMIT 1");
     $status = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($status && $status['is_active']) {

